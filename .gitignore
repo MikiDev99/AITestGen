@@ -1,0 +1,7 @@
+.build/
+.swiftpm/
+*.o
+*.d
+DerivedData/
+.aitestgen_cache.json
+.DS_Store
