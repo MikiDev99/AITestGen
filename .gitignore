@@ -5,3 +5,4 @@
 DerivedData/
 .aitestgen_cache.json
 .DS_Store
+Package.resolved
