@@ -23,7 +23,14 @@ struct AITestGenTool: ParsableCommand {
     var all: Bool = false
 
     mutating func run() throws {
-        let apiKey = "sk-LA-TUA-CHIAVE-QUI"
+        let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
+
+        guard !apiKey.isEmpty else {
+            print("Errore: chiave API mancante.")
+            print("Soluzione: export OPENAI_API_KEY=\"sk-...\" nel tuo ~/.zshrc")
+            throw ExitCode.failure
+        }
+        
         let projectPath = project
         let modelName = model
         let outputPath = output
