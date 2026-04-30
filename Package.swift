@@ -5,15 +5,9 @@ let package = Package(
     name: "AITestGen",
     platforms: [.macOS(.v13)],
     products: [
-        // L'eseguibile CLI (per chi vuole usarlo senza Xcode)
         .executable(
             name: "aitestgen",
             targets: ["AITestGenTool"]
-        ),
-        // Il plugin (per chi lo aggiunge come dipendenza in Xcode)
-        .plugin(
-            name: "AITestGenPlugin",
-            targets: ["AITestGenPlugin"]
         ),
     ],
     dependencies: [
@@ -27,7 +21,6 @@ let package = Package(
         ),
     ],
     targets: [
-        // Logica condivisa — invariata
         .target(
             name: "AITestGenCore",
             dependencies: [
@@ -35,7 +28,6 @@ let package = Package(
                 .product(name: "SwiftParser", package: "swift-syntax"),
             ]
         ),
-        // Eseguibile CLI — rinominato da AITestGenCLI
         .executableTarget(
             name: "AITestGenTool",
             dependencies: [
@@ -43,23 +35,6 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ]
         ),
-        // Plugin Xcode — nuovo
-        .plugin(
-            name: "AITestGenPlugin",
-            capability: .command(
-                intent: .custom(
-                    verb: "generate-ai-tests",
-                    description: "Genera test XCTest con AI per i file Swift del progetto"
-                ),
-                permissions: [
-                    .writeToPackageDirectory(
-                        reason: "Scrive i file di test generati nella cartella AIGeneratedTests"
-                    ),
-                ]
-            ),
-            dependencies: ["AITestGenTool"]
-        ),
-        // Test del tool — invariati
         .testTarget(
             name: "AITestGenCoreTests",
             dependencies: ["AITestGenCore"]
