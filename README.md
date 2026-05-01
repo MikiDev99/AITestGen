@@ -24,6 +24,13 @@ AITestGen analyzes your Swift code, builds a dependency graph (RAG), and generat
 mint install MikiDev99/AITestGen
 ```
 
+### Configure your PATH
+Add Mint's bin folder to your PATH so you can run `aitestgen` from anywhere:
+```bash
+echo 'export PATH="$HOME/.mint/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
 ### Configure your API key
 Add this line to your `~/.zshrc` or `~/.bash_profile`:
 ```bash
