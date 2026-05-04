@@ -26,6 +26,29 @@ public struct ParsedType {
     public let protocols: [String]     // protocolli che implementa
     public let methods: [ParsedMethod]
     public let properties: [ParsedProperty]
+    
+    // Un tipo è testabile se ha metodi pubblici reali
+    // oppure proprietà che non siano solo "body"
+    public var isTestable: Bool {
+        // Esclude PreviewProvider esplicitamente
+        if protocols.contains("PreviewProvider") { return false }
+
+        // Esclude enum senza metodi
+        if keyword == "enum" && methods.isEmpty { return false }
+
+        // Controlla se le proprietà sono solo "body" o "previews"
+        let meaningfulProperties = properties.filter {
+            $0.name != "body" && $0.name != "previews"
+        }
+        let meaningfulMethods = methods.filter {
+            $0.name != "body" && $0.name != "previews"
+        }
+
+        // Se non ha né proprietà né metodi significativi non è testabile
+        if meaningfulProperties.isEmpty && meaningfulMethods.isEmpty { return false }
+
+        return true
+    }
 }
 
 // Il risultato dell'analisi di un intero file
@@ -41,6 +64,14 @@ public struct ParsedFile {
     // Retrocompatibile: DependencyIndex usa ancora .referencedTypeNames
     public var referencedTypeNames: Set<String> {
         allReferencedTypeNames
+    }
+    
+    public var testableTypes: [ParsedType] {
+        types.filter { $0.isTestable }
+    }
+
+    public var hasTestableTypes: Bool {
+        !testableTypes.isEmpty
     }
     // ────────────────────────────────────────────────────────────────────────
 }

@@ -74,9 +74,15 @@ private func generate(
     print("AITestGen v\(AITestGenCore.version)\n")
 
     let projectURL = URL(fileURLWithPath: projectPath)
-    let outputURL = output.isEmpty
-        ? projectURL.appendingPathComponent("AIGeneratedTests")
-        : URL(fileURLWithPath: output)
+    let outputURL: URL
+    if !output.isEmpty {
+        // L'utente ha specificato --output esplicitamente
+        outputURL = URL(fileURLWithPath: output)
+    } else {
+        // Cerca automaticamente la cartella test del progetto
+        print("Ricerca cartella test...")
+        outputURL = InteractiveMenu.selectOutputDirectory(projectDirectory: projectURL)
+    }
 
     // 1. Scansione
     print("Scansione progetto...")

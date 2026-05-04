@@ -56,4 +56,42 @@ public struct ProjectScanner {
         ]
         return excluded.contains { path.contains($0) }
     }
+    
+    public static func findTestDirectories(in projectDirectory: URL) -> [URL] {
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(
+            at: projectDirectory,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) else { return [] }
+
+        var testDirs: [URL] = []
+
+        for case let url as URL in enumerator {
+            // Salta la cartella .build e DerivedData
+            guard !url.path.contains(".build"),
+                  !url.path.contains("DerivedData") else { continue }
+
+            var isDirectory: ObjCBool = false
+            fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
+            guard isDirectory.boolValue else { continue }
+
+            // Cerca cartelle con "Tests" o "Test" nel nome
+            let name = url.lastPathComponent
+            guard name.contains("Tests") || name.contains("Test") else { continue }
+
+            // Verifica che contenga almeno un file Swift
+            // (esclude cartelle vuote o cartelle UITest se vogliamo)
+            let contents = (try? fm.contentsOfDirectory(atPath: url.path)) ?? []
+            let hasSwift = contents.contains { $0.hasSuffix(".swift") }
+            guard hasSwift else { continue }
+
+            // Esclude UITest — non è dove vogliamo scrivere unit test
+            guard !name.contains("UITest") else { continue }
+
+            testDirs.append(url)
+        }
+
+        return testDirs.sorted { $0.lastPathComponent < $1.lastPathComponent }
+    }
 }
