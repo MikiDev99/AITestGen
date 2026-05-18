@@ -13,8 +13,8 @@ struct AITestGenTool: ParsableCommand {
     @Option(name: .shortAndLong, help: "Cartella del progetto (default: cartella corrente)")
     var project: String = FileManager.default.currentDirectoryPath
 
-    @Option(name: .long, help: "Modello GPT da usare")
-    var model: String = "gpt-4o"
+    @Option(name: .long, help: "Modello Mistral da usare")
+    var model: String = "mistral-large-latest"
 
     @Option(name: .long, help: "Cartella di output per i test")
     var output: String = ""
@@ -23,11 +23,11 @@ struct AITestGenTool: ParsableCommand {
     var all: Bool = false
 
     mutating func run() throws {
-        let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
+        let apiKey = ProcessInfo.processInfo.environment["MISTRAL_API_KEY"] ?? ""
 
         guard !apiKey.isEmpty else {
             print("Errore: chiave API mancante.")
-            print("Soluzione: export OPENAI_API_KEY=\"sk-...\" nel tuo ~/.zshrc")
+            print("Soluzione: export MISTRAL_API_KEY=\"...\" nel tuo ~/.zshrc")
             throw ExitCode.failure
         }
         

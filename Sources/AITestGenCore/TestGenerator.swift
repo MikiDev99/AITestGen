@@ -2,10 +2,10 @@ import Foundation
 
 public struct TestGenerator {
 
-    private let client: GPTClient
+    private let client: LLMClient
 
-    public init(apiKey: String, model: String = "gpt-4o") {
-        self.client = GPTClient(apiKey: apiKey, model: model)
+    public init(apiKey: String, model: String = "mistral-large-latest") {
+        self.client = LLMClient(apiKey: apiKey, model: model)
     }
 
     public struct GeneratedTest {
@@ -21,48 +21,49 @@ public struct TestGenerator {
     ) async throws -> GeneratedTest {
 
         let system = """
-        Sei un senior iOS engineer specializzato in Swift, SwiftUI e XCTest.
-        Il tuo compito è generare file di test XCTest completi e compilabili.
+        You are a senior iOS engineer specialized in Swift, SwiftUI, and XCTest.
+        Your task is to generate complete, compilable XCTest files.
 
-        Regole assolute:
-        - Scrivi SOLO codice Swift valido. Zero testo fuori dal codice.
-        - Non usare markdown, backtick, o commenti tipo "ecco il codice".
-        - Inizia direttamente con "import XCTest".
-        - I test devono compilare con Xcode 15+ senza modifiche.
-        - Per le View SwiftUI testa il ViewModel o la logica, non la View stessa.
-        - Se hai bisogno di mock, definiscili nello stesso file come classi/struct Mock*.
-        - Usa @testable import solo se il modulo è testabile (non per SwiftUI puri).
-        - Naming dei test: test_nomeMetodo_scenario_risultatoAtteso
+        Absolute rules:
+        - Write ONLY valid Swift code. No text outside the code.
+        - Do not use markdown, backticks, or comments like "here is the code".
+        - Start directly with "import XCTest".
+        - Tests must compile with Xcode 15+ without modifications.
+        - For SwiftUI Views, test the ViewModel or logic, not the View itself.
+        - If you need mocks, define them in the same file as Mock* classes/structs.
+        - Use @testable import only if the module is testable (not for pure SwiftUI).
+        - Test method naming: test_methodName_scenario_expectedResult
         """
 
         let user = """
-        Genera un file XCTest per il seguente codice Swift.
-        Modulo: \(moduleName)
+        Generate a complete XCTest file for the following Swift code.
+        Module: \(moduleName)
 
         \(context)
 
-        Il file di test deve:
-        1. Coprire ogni metodo pubblico con almeno 2 casi (happy path + edge case)
-        2. Testare valori boundary: array vuoti, nil, stringhe vuote, valori negativi
-        3. Usare setUp() per inizializzare il soggetto sotto test
-        4. Per metodi async usare async throws nel metodo di test
-        5. Per classi ObservableObject testare che @Published emetta i valori corretti
+        The test file must:
+        1. Cover every public method with at least 2 cases (happy path + edge case)
+        2. Test boundary values: empty arrays, nil, empty strings, negative values
+        3. Use setUp() to initialize the subject under test
+        4. For async methods use async throws in the test method
+        5. For ObservableObject classes test that @Published properties emit correct values
 
-        Inizia con: import XCTest
+        Start with: import XCTest
         """
 
         let raw = try await client.generate(system: system, user: user)
         let clean = stripMarkdown(raw)
+        let formatted = formatCode(clean)
         let baseName = file.url.deletingPathExtension().lastPathComponent
 
         return GeneratedTest(
             sourceFile: file,
-            code: clean,
+            code: formatted,
             outputFileName: "\(baseName)Tests.swift"
         )
     }
 
-    // Rimuove i backtick markdown che GPT a volte aggiunge
+    // Rimuove i backtick markdown che LLM a volte aggiunge
     private func stripMarkdown(_ code: String) -> String {
         var lines = code.components(separatedBy: "\n")
         if lines.first?.trimmingCharacters(in: .whitespaces).hasPrefix("```") == true {
@@ -72,5 +73,42 @@ public struct TestGenerator {
             lines.removeLast()
         }
         return lines.joined(separator: "\n")
+    }
+
+    private func formatCode(_ code: String) -> String {
+        var result: [String] = []
+        var indentLevel = 0
+        let indentUnit = "    " // 4 spazi
+
+        for line in code.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            // Riga vuota — la teniamo vuota
+            if trimmed.isEmpty {
+                result.append("")
+                continue
+            }
+
+            // Riduci indent prima di scrivere le righe che chiudono un blocco
+            if trimmed.hasPrefix("}") || trimmed.hasPrefix("]") || trimmed.hasPrefix(")") {
+                indentLevel = max(0, indentLevel - 1)
+            }
+
+            result.append(String(repeating: indentUnit, count: indentLevel) + trimmed)
+
+            // Aumenta indent dopo le righe che aprono un blocco
+            if trimmed.hasSuffix("{") || trimmed.hasSuffix("[") || trimmed.hasSuffix("(") {
+                indentLevel += 1
+            }
+
+            // Caso speciale: riga che apre e chiude nello stesso giro
+            // es: "override func setUp() { super.setUp() }"
+            // non deve aumentare il livello
+            if trimmed.hasSuffix("{") && trimmed.contains("}") {
+                indentLevel = max(0, indentLevel - 1)
+            }
+        }
+
+        return result.joined(separator: "\n")
     }
 }

@@ -1,17 +1,17 @@
 import Foundation
 
-public struct GPTClient {
+public struct LLMClient {
 
     private let apiKey: String
     private let model: String
 
-    public init(apiKey: String, model: String = "gpt-4o") {
+    public init(apiKey: String, model: String = "mistral-large-latest") {
         self.apiKey = apiKey
         self.model = model
     }
 
     public func generate(system: String, user: String) async throws -> String {
-        let url = URL(string: "https://api.openai.com/v1/chat/completions")!
+        let url = URL(string: "https://api.mistral.ai/v1/chat/completions")!
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -20,10 +20,10 @@ public struct GPTClient {
 
         let body: [String: Any] = [
             "model": model,
-            "temperature": 0.2,   // bassa per codice deterministico
+            "temperature": 0.2,
             "messages": [
                 ["role": "system", "content": system],
-                ["role": "user",   "content": user]
+                ["role": "user", "content": user]
             ]
         ]
 
@@ -32,12 +32,12 @@ public struct GPTClient {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let http = response as? HTTPURLResponse else {
-            throw GPTError.invalidResponse
+            throw LLMError.invalidResponse
         }
 
         guard http.statusCode == 200 else {
             let raw = String(data: data, encoding: .utf8) ?? "?"
-            throw GPTError.apiError(statusCode: http.statusCode, body: raw)
+            throw LLMError.apiError(statusCode: http.statusCode, body: raw)
         }
 
         guard
@@ -47,14 +47,14 @@ public struct GPTClient {
             let message = first["message"] as? [String: Any],
             let content = message["content"] as? String
         else {
-            throw GPTError.unexpectedFormat
+            throw LLMError.unexpectedFormat
         }
 
         return content
     }
 }
 
-public enum GPTError: Error, LocalizedError {
+public enum LLMError: Error, LocalizedError {
     case invalidResponse
     case apiError(statusCode: Int, body: String)
     case unexpectedFormat

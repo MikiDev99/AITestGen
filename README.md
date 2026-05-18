@@ -1,6 +1,6 @@
 # AITestGen
 
-Automatically generate XCTest unit tests for iOS and Swift projects using AI (GPT-4o).
+Automatically generate XCTest unit tests for iOS and Swift projects using AI (Mistral).
 
 AITestGen analyzes your Swift code, builds a dependency graph (RAG), and generates contextual unit tests that use the real types from your project.
 
@@ -9,7 +9,7 @@ AITestGen analyzes your Swift code, builds a dependency graph (RAG), and generat
 1. **Scanning** — finds all `.swift` files in the project, excluding existing tests, generated files, and AppDelegate
 2. **RAG Indexing** — builds a local dependency index between types. If `LoginViewModel` uses `User` and `AuthService`, they are automatically included in the context
 3. **Interactive selection** — displays available files and asks which ones to test
-4. **Generation** — sends the code + dependencies to GPT-4o and writes the XCTest files
+4. **Generation** — sends the code + dependencies to Mistral and writes the XCTest files
 
 ## Installation
 
@@ -17,7 +17,7 @@ AITestGen analyzes your Swift code, builds a dependency graph (RAG), and generat
 - macOS 13+
 - Xcode 15+
 - [Mint](https://github.com/yonaskolb/Mint): `brew install mint`
-- OpenAI API key: [platform.openai.com](https://platform.openai.com)
+- Mistral API key: [console.mistral.ai](https://console.mistral.ai)
 
 ### Install AITestGen
 ```bash
@@ -34,7 +34,7 @@ source ~/.zshrc
 ### Configure your API key
 Add this line to your `~/.zshrc` or `~/.bash_profile`:
 ```bash
-export OPENAI_API_KEY="sk-..."
+export MISTRAL_API_KEY="your-key-here"
 ```
 Then reload your terminal:
 ```bash
@@ -48,15 +48,15 @@ cd /path/to/your/project
 aitestgen
 ```
 
-Follow the interactive menu to choose which files to test. Generated tests are saved in `AIGeneratedTests/` inside your project folder.
+Follow the interactive menu to choose which files to test. Generated tests are saved inside your project folder.
 
 ### Available options
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--project` | Project directory | Current directory |
-| `--model` | GPT model to use | `gpt-4o` |
-| `--output` | Output directory | `AIGeneratedTests/` |
+| `--model` | Mistral model to use | `mistral-large-latest` |
+| `--output` | Output directory | Auto-detected test folder |
 | `--all` | Generate tests for all files without prompting | `false` |
 
 ### Examples
@@ -68,12 +68,22 @@ aitestgen
 # Specific project path
 aitestgen --project /Users/you/Developer/MyProject
 
-# All files using gpt-4o-mini (cheaper)
-aitestgen --all --model gpt-4o-mini
+# All files using a specific model
+aitestgen --all --model mistral-small-latest
 
 # Custom output folder
 aitestgen --output /Users/you/Desktop/Tests
 ```
+
+### Available Mistral models
+
+| Model | Quality | Speed | Cost |
+|-------|---------|-------|------|
+| `mistral-large-latest` | ⭐⭐⭐ | Slow | Higher |
+| `mistral-small-latest` | ⭐⭐ | Fast | Lower |
+| `codestral-latest` | ⭐⭐⭐ | Medium | Medium |
+
+> **Tip:** `codestral-latest` is specifically trained on code and may produce better Swift tests.
 
 ## Xcode Integration (optional)
 
@@ -94,22 +104,23 @@ From that point, press the shortcut with a project open in Xcode and the tool la
 
 ## After generation
 
-1. Open Xcode in your project
-2. Drag the `AIGeneratedTests/` folder into your test target
+1. Tests are written directly into your existing test folder (e.g. `MyProjectTests/`)
+2. If no test folder is found, they are saved in `AIGeneratedTests/` — drag it into your test target in Xcode
 3. Build and run tests with `Cmd+U`
 
 Thanks to RAG, generated tests use the real types from your project and compile without modifications in most cases.
 
 ## API costs
 
-With `gpt-4o` the cost is approximately $0.005 per file. A project with 10 files costs around $0.05.
+Mistral pricing is significantly lower than OpenAI. Approximate cost per file:
 
-To cap your spending, set a usage limit at [platform.openai.com/usage](https://platform.openai.com/usage).
+| Model | Cost per file |
+|-------|--------------|
+| `mistral-large-latest` | ~$0.002 |
+| `mistral-small-latest` | ~$0.0005 |
+| `codestral-latest` | ~$0.001 |
 
-To reduce costs, use `--model gpt-4o-mini`:
-```bash
-aitestgen --model gpt-4o-mini
-```
+A project with 10 files costs approximately $0.005–$0.02 total.
 
 ## Project structure
 
@@ -121,7 +132,7 @@ AITestGen/
 │   │   ├── SwiftFileParser.swift   # AST parser via swift-syntax
 │   │   ├── DependencyIndex.swift   # RAG dependency index
 │   │   ├── InteractiveMenu.swift   # File selection menu
-│   │   ├── GPTClient.swift         # OpenAI client
+│   │   ├── LLMClient.swift         # Mistral API client
 │   │   └── TestGenerator.swift     # Test generation
 │   └── AITestGenTool/              # CLI entry point
 │       └── main.swift
