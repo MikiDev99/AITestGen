@@ -5,13 +5,13 @@ public struct LLMClient {
     private let apiKey: String
     private let model: String
 
-    public init(apiKey: String, model: String = "mistral-large-latest") {
+    public init(apiKey: String, model: String = "moonshotai/kimi-k2.6") {
         self.apiKey = apiKey
         self.model = model
     }
 
     public func generate(system: String, user: String) async throws -> String {
-        let url = URL(string: "https://api.mistral.ai/v1/chat/completions")!
+        let url = URL(string: "https://integrate.api.nvidia.com/v1/chat/completions")!
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

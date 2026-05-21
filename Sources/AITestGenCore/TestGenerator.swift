@@ -4,7 +4,7 @@ public struct TestGenerator {
 
     private let client: LLMClient
 
-    public init(apiKey: String, model: String = "mistral-large-latest") {
+    public init(apiKey: String, model: String = "moonshotai/kimi-k2.6") {
         self.client = LLMClient(apiKey: apiKey, model: model)
     }
 
@@ -27,12 +27,12 @@ public struct TestGenerator {
         Absolute rules:
         - Write ONLY valid Swift code. No text outside the code.
         - Do not use markdown, backticks, or comments like "here is the code".
-        - Start directly with "import XCTest".
         - Tests must compile with Xcode 15+ without modifications.
         - For SwiftUI Views, test the ViewModel or logic, not the View itself.
         - If you need mocks, define them in the same file as Mock* classes/structs.
         - Use @testable import only if the module is testable (not for pure SwiftUI).
         - Test method naming: test_methodName_scenario_expectedResult
+        - Be concise: max 3 test methods per function, no redundant comments.
         """
 
         let user = """
@@ -48,7 +48,16 @@ public struct TestGenerator {
         4. For async methods use async throws in the test method
         5. For ObservableObject classes test that @Published properties emit correct values
 
-        Start with: import XCTest
+        MUST FOLLOW RULES:
+        - Write clean, concise code — no redundant comments or unnecessary test methods
+        - Verify syntax correctness before replying
+        - Do not assign to let properties after initialization
+        - If you use XCTAssertLessThan, XCTAssertGreaterThan or similar, ensure the type conforms to Comparable — use .rawValue if needed
+        - If you use XCTAssertEqual or XCTAssertNotEqual, ensure the type conforms to Equatable
+        - Do not declare variables as var unless you explicitly mutate them after initialization.
+        - Never use trailing closure syntax with forEach or map when the body spans multiple lines. Use a for-in loop instead.
+        - Generate runnable code that requires zero modifications
+        - Start with: import XCTest
         """
 
         let raw = try await client.generate(system: system, user: user)
@@ -66,12 +75,23 @@ public struct TestGenerator {
     // Rimuove i backtick markdown che LLM a volte aggiunge
     private func stripMarkdown(_ code: String) -> String {
         var lines = code.components(separatedBy: "\n")
+
+        // Rimuove righe introduttive prima del codice Swift
+        if let firstCodeLine = lines.firstIndex(where: {
+            $0.trimmingCharacters(in: .whitespaces).hasPrefix("import") ||
+            $0.trimmingCharacters(in: .whitespaces).hasPrefix("//")
+        }) {
+            lines = Array(lines[firstCodeLine...])
+        }
+
+        // Rimuove backtick markdown
         if lines.first?.trimmingCharacters(in: .whitespaces).hasPrefix("```") == true {
             lines.removeFirst()
         }
         if lines.last?.trimmingCharacters(in: .whitespaces).hasPrefix("```") == true {
             lines.removeLast()
         }
+
         return lines.joined(separator: "\n")
     }
 

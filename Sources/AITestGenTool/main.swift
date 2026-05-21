@@ -13,8 +13,8 @@ struct AITestGenTool: ParsableCommand {
     @Option(name: .shortAndLong, help: "Cartella del progetto (default: cartella corrente)")
     var project: String = FileManager.default.currentDirectoryPath
 
-    @Option(name: .long, help: "Modello Mistral da usare")
-    var model: String = "mistral-large-latest"
+    @Option(name: .long, help: "Modello da usare")
+    var model: String = "moonshotai/kimi-k2.6"
 
     @Option(name: .long, help: "Cartella di output per i test")
     var output: String = ""
@@ -23,11 +23,11 @@ struct AITestGenTool: ParsableCommand {
     var all: Bool = false
 
     mutating func run() throws {
-        let apiKey = ProcessInfo.processInfo.environment["MISTRAL_API_KEY"] ?? ""
+        let apiKey = ProcessInfo.processInfo.environment["NVIDIA_API_KEY"] ?? ""
 
         guard !apiKey.isEmpty else {
             print("Errore: chiave API mancante.")
-            print("Soluzione: export MISTRAL_API_KEY=\"...\" nel tuo ~/.zshrc")
+            print("Soluzione: export NVIDIA_API_KEY=\"...\" nel tuo ~/.zshrc")
             throw ExitCode.failure
         }
         
@@ -128,7 +128,7 @@ private func generate(
 
         let depPaths = index.dependencyPaths(for: parsed)
         print("  Tipi: \(parsed.types.count) | Dipendenze RAG: \(depPaths.count) file")
-        print("  Chiamata a GPT (\(model))...")
+        print("  Chiamata a LLM (\(model))...")
 
         let result = try await generator.generate(
             for: file,
@@ -145,6 +145,5 @@ private func generate(
     print("")
     print("Prossimi passi:")
     print("  1. Apri Xcode nel tuo progetto")
-    print("  2. Trascina la cartella AIGeneratedTests nel test target")
-    print("  3. Lancia i test con Cmd+U")
+    print("  2. Lancia i test con Cmd+U")
 }
