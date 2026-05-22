@@ -56,6 +56,12 @@ public struct TestGenerator {
         - If you use XCTAssertEqual or XCTAssertNotEqual, ensure the type conforms to Equatable
         - Do not declare variables as var unless you explicitly mutate them after initialization.
         - Never use trailing closure syntax with forEach or map when the body spans multiple lines. Use a for-in loop instead.
+        - For any method that manipulates strings, test all whitespace variants: 
+          spaces, tabs, newlines (\n, \r, \r\n)
+        - For any method with numeric boundaries, test: zero, negative values, 
+          minimum valid, maximum valid, minimum+1 over maximum
+        - For any method that accepts collections, test: empty, single element, 
+          multiple elements
         - Generate runnable code that requires zero modifications
         - Start with: import XCTest
         """
