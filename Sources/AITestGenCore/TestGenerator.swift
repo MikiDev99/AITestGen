@@ -52,8 +52,8 @@ public struct TestGenerator {
         - Write clean, concise code — no redundant comments or unnecessary test methods
         - Verify syntax correctness before replying
         - Do not assign to let properties after initialization
-        - If you use XCTAssertLessThan, XCTAssertGreaterThan or similar, ensure the type conforms to Comparable — use .rawValue if needed
-        - If you use XCTAssertEqual or XCTAssertNotEqual, ensure the type conforms to Equatable
+        - If you use XCTAssertLessThan, XCTAssertGreaterThan or similar, you MUST ensure the type conforms to Comparable — use .rawValue if needed
+        - If you use XCTAssertEqual or XCTAssertNotEqual, you MUST ensure the type conforms to Equatable
         - Do not declare variables as var unless you explicitly mutate them after initialization.
         - Never use trailing closure syntax with forEach or map when the body spans multiple lines. Use a for-in loop instead.
         - For any method that manipulates strings, test all whitespace variants: 
