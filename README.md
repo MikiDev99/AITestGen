@@ -41,7 +41,7 @@ source ~/.zshrc
 ### Configure your API key
 Add this line to your `~/.zshrc` or `~/.bash_profile`:
 ```bash
-export MISTRAL_API_KEY="your-key-here"
+export NVIDIA_API_KEY="your-key-here"
 ```
 Then reload your terminal:
 ```bash
@@ -73,7 +73,8 @@ Export the crash log as `.txt` from Firebase Crashlytics and pass it with `--cra
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--project` | Project directory | Current directory |
-| `--model` | AI model to use | `mistral-large-latest` |
+| `--model` | AI model to use | `moonshotai/kimi-k2.6` |
+| `--model` | AI model to use | `moonshotai/kimi-k2.6` |
 | `--output` | Output directory | Auto-detected test folder |
 | `--all` | Generate tests for all files without prompting | `false` |
 
@@ -83,7 +84,7 @@ Export the crash log as `.txt` from Firebase Crashlytics and pass it with `--cra
 |--------|-------------|---------|
 | `--crash-log` | Path to the crash log .txt file | Required |
 | `--project` | Project directory | Current directory |
-| `--model` | AI model to use | `mistral-large-latest` |
+| `--model` | AI model to use | `moonshotai/kimi-k2.6` |
 
 ## Examples
 
