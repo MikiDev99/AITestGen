@@ -1,15 +1,22 @@
 # AITestGen
 
-Automatically generate XCTest unit tests for iOS and Swift projects using AI.
+Automatically generate XCTest unit tests and analyze crash logs for iOS and Swift projects using AI.
 
-AITestGen analyzes your Swift code, builds a dependency graph (RAG), and generates contextual unit tests that use the real types from your project.
+AITestGen analyzes your Swift code, builds a dependency graph (RAG), and generates contextual unit tests that use the real types from your project. It can also analyze Firebase Crashlytics crash logs to identify root causes and suggest fixes.
 
 ## How it works
 
+### Unit Test Generation
 1. **Scanning** — finds all `.swift` files in the project, excluding existing tests, generated files, and AppDelegate
 2. **RAG Indexing** — builds a local dependency index between types. If `LoginViewModel` uses `User` and `AuthService`, they are automatically included in the context
 3. **Interactive selection** — displays available files and asks which ones to test
 4. **Generation** — sends the code + dependencies to the AI model and writes the XCTest files
+
+### Crash Analysis
+1. **Parsing** — reads a Firebase Crashlytics crash log and extracts the crashed thread
+2. **RAG lookup** — finds the source files involved in the crash inside your project
+3. **Analysis** — sends the stack trace + source code to the AI model
+4. **Output** — returns root cause, affected files with line numbers, and a concrete fix
 
 ## Installation
 
@@ -34,7 +41,7 @@ source ~/.zshrc
 ### Configure your API key
 Add this line to your `~/.zshrc` or `~/.bash_profile`:
 ```bash
-export NVIDIA_API_KEY="your-key-here"
+export MISTRAL_API_KEY="your-key-here"
 ```
 Then reload your terminal:
 ```bash
@@ -43,6 +50,7 @@ source ~/.zshrc
 
 ## Usage
 
+### Generate unit tests
 ```bash
 cd /path/to/your/project
 aitestgen
@@ -50,29 +58,50 @@ aitestgen
 
 Follow the interactive menu to choose which files to test. Generated tests are written directly into your existing test folder (e.g. `MyProjectTests/`). If no test folder is found, they are saved in `AIGeneratedTests/`.
 
-### Available options
+### Analyze a crash log
+```bash
+cd /path/to/your/project
+aitestgen crash --crash-log /path/to/crash.txt
+```
 
-| Option     | Description                                   | Default                  |
-|------------|-----------------------------------------------|--------------------------|
-| `--project`| Project directory                             | Current directory        |
-| `--model`  | AI model to use                               | `mistral-large-latest`   |
-| `--output` | Output directory                              | Auto-detected test folder|
-| `--all`    | Generate tests for all files without prompting| `false`                  |
+Export the crash log as `.txt` from Firebase Crashlytics and pass it with `--crash-log`. The tool will identify the root cause and suggest a fix. After the analysis, run `aitestgen` to generate tests for the affected files.
 
-### Examples
+## Available options
+
+### aitestgen (unit test generation)
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--project` | Project directory | Current directory |
+| `--model` | AI model to use | `mistral-large-latest` |
+| `--output` | Output directory | Auto-detected test folder |
+| `--all` | Generate tests for all files without prompting | `false` |
+
+### aitestgen crash (crash analysis)
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--crash-log` | Path to the crash log .txt file | Required |
+| `--project` | Project directory | Current directory |
+| `--model` | AI model to use | `mistral-large-latest` |
+
+## Examples
 
 ```bash
-# Project in current directory
+# Generate tests for current project
 aitestgen
 
-# Specific project path
+# Generate tests for a specific project
 aitestgen --project /Users/you/Developer/MyProject
 
-# Specify a different model
-aitestgen --model moonshotai/kimi-k2
+# Generate tests for all files using a specific model
+aitestgen --all --model moonshotai/kimi-k2.6
 
-# Custom output folder
-aitestgen --output /Users/you/Desktop/Tests
+# Analyze a crash log
+aitestgen crash --crash-log ~/Downloads/crash.txt
+
+# Analyze a crash log for a specific project
+aitestgen crash --crash-log ~/Downloads/crash.txt --project /Users/you/Developer/MyProject
 ```
 
 ### Available models
@@ -94,15 +123,11 @@ chmod +x ~/aitestgen-xcode.sh
 4. Assign a shortcut (e.g. `Cmd+Shift+T`)
 5. Check **Run** and select `~/aitestgen-xcode.sh`
 
-From that point, press the shortcut with a project open in Xcode and the tool launches automatically in Terminal.
-
 ## After generation
 
 1. Tests are written directly into your existing test folder (e.g. `MyProjectTests/`)
 2. If no test folder is found, they are saved in `AIGeneratedTests/` — drag it into your test target in Xcode
 3. Build and run tests with `Cmd+U`
-
-Thanks to RAG, generated tests use the real types from your project and compile without modifications in most cases.
 
 ## Project structure
 
@@ -115,7 +140,9 @@ AITestGen/
 │   │   ├── DependencyIndex.swift   # RAG dependency index
 │   │   ├── InteractiveMenu.swift   # File selection menu
 │   │   ├── LLMClient.swift         # AI API client
-│   │   └── TestGenerator.swift     # Test generation
+│   │   ├── TestGenerator.swift     # Test generation
+│   │   ├── CrashLogParser.swift    # Crash log parser
+│   │   └── CrashAnalyzer.swift     # Crash analysis
 │   └── AITestGenTool/              # CLI entry point
 │       └── main.swift
 ├── Scripts/
